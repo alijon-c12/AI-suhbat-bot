@@ -69,25 +69,25 @@ def ask_ai_chat(user_id: int, user_message: str) -> str:
         session["history"] = history
 
     # Pollinations AI Text API orqali javob olish (bepul, barqaror va tez)
-    try:
-        url = "https://text.pollinations.ai/"
-        payload = {
-            "messages": history,
-            "model": "openai",
-            "temperature": 0.7,
-            "presence_penalty": 0.2
-        }
-        headers = {"Content-Type": "application/json"}
-        
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        if response.status_code == 200 and response.text.strip():
-            ai_reply = response.text.strip()
-            # Bot javobini tarixga saqlash
-            history.append({"role": "assistant", "content": ai_reply})
-            return ai_reply
-    except Exception as e:
-        logger.warning("Pollinations AI matn so'rovida xatolik: %s. Zaxira usulga o'tilmoqda.", e)
+    for attempt in range(3):
+        try:
+            url = "https://text.pollinations.ai/"
+            payload = {
+                "messages": history,
+                "model": "openai",
+                "temperature": 0.7,
+                "presence_penalty": 0.2
+            }
+            headers = {"Content-Type": "application/json"}
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            if response.status_code == 200 and response.text.strip():
+                ai_reply = response.text.strip()
+                # Bot javobini tarixga saqlash
+                history.append({"role": "assistant", "content": ai_reply})
+                return ai_reply
+        except Exception as e:
+            logger.warning("Pollinations API attempt %d failed: %s", attempt + 1, e)
+            time.sleep(2 ** attempt)
 
     # Zaxira (Fallback) oddiy GET so'rovi
     try:
@@ -103,10 +103,7 @@ def ask_ai_chat(user_id: int, user_message: str) -> str:
     except Exception as e:
         logger.error("Zaxira AI suhbatida ham xatolik: %s", e)
 
-    return (
-        "Kechirasiz, hozir tarmoqda biroz yuklama kuzatilmoqda. 🌐 "
-        "Birozdan so'ng qayta yozib ko'ring yoki /clear buyrug'i bilan suhbatni yangilang!"
-    )
+    return "Kechirasiz, hozir tarmoqda biroz yuklama kuzatilmoqda. 🌐 Bir necha soniya kutib qayta urinib ko'ring."
 
 
 def enhance_prompt_to_english(prompt: str) -> str:

@@ -350,7 +350,11 @@ def handle_all_text(message: types.Message):
                     reply_markup=get_main_keyboard()
                 )
 
-        threading.Thread(target=run_image_generation).start()
+        try:
+            threading.Thread(target=run_image_generation, daemon=True).start()
+        except Exception as e:
+            logger.error("Failed to start image generation thread: %s", e)
+            bot.send_message(user_id, "⚠️ Rasm yaratish jarayoni boshlanmadi. Keyinroq urinib ko'ring.", reply_markup=get_main_keyboard())
         return
 
     # 2. Video yaratish kutilayotgan bo'lsa
