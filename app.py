@@ -1,11 +1,15 @@
+import logging
 import os
 import threading
-from flask import Flask, request, jsonify
 
 import telebot
+from flask import Flask, jsonify, request
 
 # Import bot instance and webhook setter from main
 from main import bot, set_telegram_webhook
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("AppEntry")
 
 app = Flask(__name__)
 
@@ -19,15 +23,28 @@ def webhook():
             update = telebot.types.Update.de_json(json_str)
             bot.process_new_updates([update])
         except Exception as e:
-            app.logger.error(f"Failed to process Telegram update: {e}")
+            logger.error("Telegram update qayta ishlashda xatolik: %s", e)
         return "", 200
-    # Simple health endpoint for Render
-    return jsonify({"status": "ok"})
+    # Render health check
+    return jsonify({"status": "ok", "bot": "running"})
 
+
+# ========================================================
+# Gunicorn yoki python app.py orqali ishlaganda ham ishlaydi
+# ========================================================
+def _start_webhook_thread():
+    """Webhook ni fon threadida o'rnatadi."""
+    try:
+        set_telegram_webhook()
+        logger.info("Webhook muvaffaqiyatli o'rnatildi.")
+    except Exception as e:
+        logger.error("Webhook o'rnatishda xatolik: %s", e)
+
+
+# Module darajasida chaqiriladi – gunicorn import qilganda ham ishlaydi
+threading.Thread(target=_start_webhook_thread, daemon=True).start()
 
 if __name__ == "__main__":
-    # Set the Telegram webhook in a background thread
-    threading.Thread(target=set_telegram_webhook, daemon=True).start()
-    # Render provides PORT env variable (fallback to 8080 for local tests)
     port = int(os.getenv("PORT", 8080))
+    logger.info("Flask server port %s da ishga tushmoqda...", port)
     app.run(host="0.0.0.0", port=port)
