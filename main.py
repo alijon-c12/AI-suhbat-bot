@@ -429,7 +429,7 @@ def handle_all_text(message: types.Message):
 # ASOSIY ISHGA TUSHIRISH (RUNNER)
 # ==========================================
 
-def start_bot():
+# Removed stray start_bot definition (was duplicate)
 def set_telegram_webhook():
     """Render‑da webhook o‘rnatish uchun Telegram API ga murojaat qiladi."""
     token = config.BOT_TOKEN
@@ -449,7 +449,7 @@ def set_telegram_webhook():
         logger.error("Webhook o‘rnatish paytida istisno: %s", e)
 
 
-def start_bot():
+
     """Render web‑service uchun bot ishga tushurish.
     Webhook o‘rnatiladi, `infinity_polling` ishlatilmaydi.
     """
