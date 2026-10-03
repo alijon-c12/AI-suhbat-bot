@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import telebot
+import requests
 from telebot import types
 
 import config
@@ -429,17 +430,32 @@ def handle_all_text(message: types.Message):
 # ==========================================
 
 def start_bot():
-    print("=" * 60)
-    print("🚀 AI Telegram Bot muvaffaqiyatli ishga tushirilmoqda...")
-    print("🤖 Suhbatdosh AI, Rasm, Video va Zerikmaslik funksiyalari faol!")
-    print("=" * 60)
+def set_telegram_webhook():
+    """Render‑da webhook o‘rnatish uchun Telegram API ga murojaat qiladi."""
+    token = config.BOT_TOKEN
+    hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+    if not hostname:
+        logger.warning("RENDER_EXTERNAL_HOSTNAME muhit oʻzgaruvchisi topilmadi, domenni qo‘lda belgilash kerak.")
+        hostname = "your-service-name.onrender.com"  # TODO: replace with real service name
+    webhook_url = f"https://{hostname}/"
+    api_url = f"https://api.telegram.org/bot{token}/setWebhook?url={webhook_url}"
+    try:
+        response = requests.get(api_url, timeout=10)
+        if response.ok:
+            logger.info("Telegram webhook muvaffaqiyatli o‘rnatildi: %s", webhook_url)
+        else:
+            logger.error("Webhook o‘rnatishda xatolik: %s", response.text)
+    except Exception as e:
+        logger.error("Webhook o‘rnatish paytida istisno: %s", e)
 
-    while True:
-        try:
-            bot.infinity_polling(timeout=30, long_polling_timeout=20)
-        except Exception as e:
-            logger.critical("Bot polling jarayonida xatolik: %s. 5 soniyadan keyin qayta ishga tushadi...", e)
-            time.sleep(5)
+
+def start_bot():
+    """Render web‑service uchun bot ishga tushurish.
+    Webhook o‘rnatiladi, `infinity_polling` ishlatilmaydi.
+    """
+    logger.info("Botni ishga tushurish: webhook o‘rnatilmoqda …")
+    set_telegram_webhook()
+    logger.info("Bot start qilindi – yangilangan webhook orqali ishlaydi.")
 
 
 if __name__ == "__main__":
