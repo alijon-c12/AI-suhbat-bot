@@ -450,6 +450,7 @@ def set_telegram_webhook():
 
 
 
+def start_bot():
     """Render web‑service uchun bot ishga tushurish.
     Webhook o‘rnatiladi, `infinity_polling` ishlatilmaydi.
     """
